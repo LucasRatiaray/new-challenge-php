@@ -1,0 +1,164 @@
+# Routes
+
+/:
+  controller: "HomeController"
+  action: "index"
+  template: "front"
+  view: "home"
+  methods: ["GET"]
+
+/about:
+  controller: "HomeController"
+  action: "about"
+  template: "front"
+  view: "about"
+  methods: ["GET"]
+
+# /register:
+#   controller: "SecurityController"
+#   action: "register"
+#   template: "security"
+#   view: "register"
+#   methods: ["GET", "POST"]
+
+/login:
+  controller: "SecurityController"
+  action: "login"
+  template: "security"
+  view: "login"
+  methods: ["GET", "POST"]
+
+/logout:
+  controller: "SecurityController"
+  action: "logout"
+  methods: ["GET"]
+
+/dashboard:
+  controller: "SecurityController"
+  action: "dashboard"
+  template: "back"
+  view: "dashboard"
+  methods: ["GET"]
+  roles: ["EDITOR", "ADMIN"]
+  security: true
+
+# Routes CRUD pour User
+/dashboard/users:
+  controller: "UserController"
+  action: "index"
+  template: "back"
+  view: "dashboard/user"
+  methods: ["GET"]
+  security: true
+  roles: ["ADMIN"]
+
+/dashboard/users/create:
+  controller: "UserController"
+  action: "create"
+  template: "back"
+  view: "dashboard/user_form"
+  methods: ["GET"]
+  security: true
+  roles: ["ADMIN"]
+
+/dashboard/users/store:
+  controller: "UserController"
+  action: "store"
+  template: "back"
+  view: "dashboard/user_form"
+  methods: ["POST"]
+  security: true
+  roles: ["ADMIN"]
+
+/dashboard/users/edit/{id}:
+  controller: "UserController"
+  action: "edit"
+  template: "back"
+  view: "dashboard/user_form"
+  methods: ["GET"]
+  security: true
+  roles: ["ADMIN"]
+  requirements:
+    id: '\d+'
+
+/dashboard/users/update/{id}:
+  controller: "UserController"
+  action: "update"
+  template: "back"
+  view: "dashboard/user_form"
+  methods: ["POST"]
+  security: true
+  roles: ["ADMIN"]
+  requirements:
+    id: '\d+'
+
+/dashboard/users/delete/{id}:
+  controller: "UserController"
+  action: "delete"
+  template: "back"
+  view: "dashboard/user.php"
+  methods: ["POST"]
+  security: true
+  roles: ["ADMIN"]
+  requirements:
+    id: '\d+'
+
+# Routes CRUD pour Page
+/dashboard/pages:
+  controller: "PageController"
+  action: "index"
+  template: "back"
+  view: "dashboard/page"
+  methods: ["GET"]
+  roles: ["ADMIN"]
+  security: true
+
+/dashboard/pages/create:
+  controller: "PageController"
+  action: "create"
+  template: "back"
+  view: "dashboard/page_form"
+  methods: ["GET", "POST"]
+  roles: ["ADMIN"]
+  security: true
+
+/dashboard/pages/update/{id}:
+  controller: "PageController"
+  action: "edit"
+  template: "back"
+  view: "dashboard/page_form"
+  methods: ["GET", "POST"]
+  roles: ["ADMIN"]
+  security: true
+
+/dashboard/pages/delete/{id}:
+  controller: "PageController"
+  action: "delete"
+  template: "back"
+  view: "dashboard/page"
+  methods: ["POST"]
+  roles: ["ADMIN"]
+  security: true
+
+/{slug}:
+  controller: "PageController"
+  action: "show"
+  template: "front"
+  view: "page"
+  methods: ["GET"]
+
+/dashboard/pages/store:
+  controller: "PageController"
+  action: "store"
+  template: "back"
+  view: "dashboard/page_form"
+  methods: ["POST"]
+  roles: ["ADMIN"]
+  security: true
+
+/activate:
+  controller: "SecurityController"
+  action: "activate"
+  template: "front"
+  view: "activation"
+  methods: ["GET"]

@@ -1,0 +1,1 @@
+Hello <?= ucfirst($_SESSION['first_name']) ?> , bienvenue sur votre tableau de bord.
