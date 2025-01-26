@@ -14,12 +14,12 @@
   view: "about"
   methods: ["GET"]
 
-# /register:
-#   controller: "SecurityController"
-#   action: "register"
-#   template: "security"
-#   view: "register"
-#   methods: ["GET", "POST"]
+/register:
+  controller: "SecurityController"
+  action: "register"
+  template: "security"
+  view: "register"
+  methods: ["GET", "POST"]
 
 /login:
   controller: "SecurityController"

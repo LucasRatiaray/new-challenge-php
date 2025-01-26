@@ -1,12 +1,14 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Core\Controllers;
 
 use Core\Forms\FormBuilder;
 use Core\Utils\Database;
+use Core\Utils\Validation;
 use Core\Models\User;
-use Core\Utils\Mailer;
+use Core\Models\Role;
 use Exception;
 
 class SecurityController extends Controller
@@ -14,20 +16,26 @@ class SecurityController extends Controller
     public function login(string $template, string $view): void
     {
         $loginForm = new FormBuilder('LoginForm');
+        $validator = new Validation();
 
         if ($loginForm->isSubmitted()) {
-            if ($loginForm->isValid()) {
-                $data = $loginForm->getData();
+            $data = $loginForm->getData();
 
+            // Validation des champs
+            $validator->validateEmail('email', $data['email'] ?? '');
+            $validator->validateRequired('mot de passe', $data['password'] ?? '');
+
+            if (!$validator->hasErrors()) {
                 $db = Database::getInstance();
-                $stmt = $db->prepare("SELECT id, first_name, last_name, email, password, is_activated FROM users WHERE email = :email LIMIT 1");
-                $stmt->execute(['email' => $data['email']]);
-                $userData = $stmt->fetch();
 
-                if ($userData) {
-                    if (!$userData['is_activated']) {
-                        $loginForm->addError("Votre compte n'est pas encore activé. Veuillez vérifier votre email.");
-                    } elseif (password_verify($data['password'], $userData['password'])) {
+                try {
+                    // Vérification de l'utilisateur dans la base de données
+                    $stmt = $db->prepare("SELECT id, first_name, last_name, email, password FROM users WHERE email = :email LIMIT 1");
+                    $stmt->execute(['email' => $data['email']]);
+                    $userData = $stmt->fetch();
+
+                    if ($userData && password_verify($data['password'], $userData['password'])) {
+                        // Création de l'utilisateur en session
                         $user = new User($userData);
                         $user->getRoles();
 
@@ -40,11 +48,16 @@ class SecurityController extends Controller
                         header("Location: /dashboard");
                         exit;
                     } else {
-                        $loginForm->addError("Email ou mot de passe incorrect.");
+                        $validator->addError("Email ou mot de passe incorrect.");
                     }
-                } else {
-                    $loginForm->addError("Email ou mot de passe incorrect.");
+                } catch (Exception $e) {
+                    $validator->addError("Une erreur est survenue lors de la connexion. Veuillez réessayer.");
                 }
+            }
+
+            // Ajout des erreurs au formulaire
+            foreach ($validator->getErrors() as $error) {
+                $loginForm->addError($error);
             }
         }
 
@@ -60,64 +73,83 @@ class SecurityController extends Controller
     public function register(string $template, string $view): void
     {
         $registerForm = new FormBuilder('RegisterForm');
+        $validator = new Validation();
 
         if ($registerForm->isSubmitted()) {
-            if ($registerForm->isValid()) {
-                $data = $registerForm->getData();
+            $data = $registerForm->getData();
 
-                if ($data['password'] !== $data['confirm_password']) {
-                    $registerForm->addError("Les mots de passe ne correspondent pas.");
-                } else {
-                    $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
+            // Validation des champs avec Validation.php
+            $validator->validateRequired('Nom', $data['last_name']);
+            $validator->validateLength('Nom', $data['last_name'], 2, 100);
 
-                    $db = Database::getInstance();
+            $validator->validateRequired('Prénom', $data['first_name']);
+            $validator->validateLength('Prénom', $data['first_name'], 2, 100);
 
-                    try {
-                        $db->beginTransaction();
+            $validator->validateEmail('Email', $data['email']);
+            $validator->validateUnique('Email', $data['email'], function ($email) {
+                $db = Database::getInstance();
+                $stmt = $db->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
+                $stmt->execute(['email' => $email]);
+                return $stmt->fetch() !== false;
+            });
 
-                        $stmt = $db->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
-                        $stmt->execute(['email' => $data['email']]);
-                        if ($stmt->fetch()) {
-                            throw new Exception("Un utilisateur avec cet email existe déjà.");
-                        }
+            $validator->validatePassword($data['password'], $data['confirm_password']);
 
-                        $stmt = $db->prepare("INSERT INTO users (first_name, last_name, email, password, is_activated) VALUES (:first_name, :last_name, :email, :password, :is_activated)");
-                        $stmt->execute([
-                            'first_name' => $data['first_name'],
-                            'last_name' => $data['last_name'],
-                            'email' => $data['email'],
-                            'password' => $hashedPassword,
-                            'is_activated' => false // Le compte n'est pas activé par défaut
-                        ]);
+            // Si des erreurs sont présentes, les ajouter au formulaire
+            if ($validator->hasErrors()) {
+                foreach ($validator->getErrors() as $error) {
+                    $registerForm->addError($error);
+                }
+            } else {
+                // Aucun problème, continuer avec l'inscription
+                $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
+                $db = Database::getInstance();
 
-                        $userId = (int)$db->lastInsertId();
+                try {
+                    $db->beginTransaction();
 
-                        // Générer un lien d'activation unique
-                        $activationToken = bin2hex(random_bytes(32));
-                        $activationLink = "http://localhost/activate?token={$activationToken}";
+                    $stmt = $db->prepare("INSERT INTO users (first_name, last_name, email, password) VALUES (:first_name, :last_name, :email, :password)");
+                    $stmt->execute([
+                        'first_name' => $data['first_name'],
+                        'last_name' => $data['last_name'],
+                        'email' => $data['email'],
+                        'password' => $hashedPassword
+                    ]);
 
-                        // Sauvegarder le token dans la base de données
-                        $stmt = $db->prepare("INSERT INTO user_activations (user_id, token) VALUES (:user_id, :token)");
-                        $stmt->execute([
-                            'user_id' => $userId,
-                            'token' => $activationToken
-                        ]);
+                    $db->commit();
 
-                        // Envoyer l'email d'activation
-                        $mailer = new Mailer();
-                        if (!$mailer->sendActivationEmail($data['email'], $activationLink)) {
-                            throw new Exception("Erreur lors de l'envoi de l'email d'activation.");
-                        }
+                    // Récupérer le nouvel utilisateur
+                    $newUser = new User();
+                    $newUser->findByEmail($data['email']);
 
-                        $db->commit();
+                    // Assigner le rôle par défaut VIEWER
+                    $role = new Role();
+                    $roleName = $role->findByName('VIEWER');
 
-                        $_SESSION['success_message'] = "Inscription réussie. Veuillez vérifier votre email pour activer votre compte.";
-                        header("Location: /login");
-                        exit;
-                    } catch (Exception $e) {
-                        $db->rollBack();
-                        $registerForm->addError("Erreur lors de l'inscription : " . $e->getMessage());
+                    if ($roleName) {
+                        $role->assignRoles($newUser->id, [$roleName['id']]);
                     }
+
+                    // Stocker les informations de l'utilisateur en session
+                    $_SESSION['user_id'] = $newUser->id;
+                    $_SESSION['first_name'] = $newUser->first_name;
+                    $_SESSION['last_name'] = $newUser->last_name;
+                    $_SESSION['email'] = $newUser->email;
+                    $_SESSION['roles'] = $newUser->roles;
+
+                    // Déterminer la redirection en fonction des rôles
+                    $roleNames = array_column($newUser->roles, 'name');
+
+                    if (in_array('EDITOR', $roleNames, true) || in_array('ADMIN', $roleNames, true)) {
+                        header("Location: /dashboard");
+                        exit;
+                    }
+
+                    header("Location: /");
+                    exit;
+                } catch (Exception $e) {
+                    $db->rollBack();
+                    $registerForm->addError("Erreur lors de l'inscription, veuillez réessayer.");
                 }
             }
         }
@@ -131,44 +163,18 @@ class SecurityController extends Controller
         ]);
     }
 
-    public function activate(string $template, string $view): void
-    {
-        $token = $_GET['token'] ?? null;
-
-        if ($token) {
-            $db = Database::getInstance();
-            $stmt = $db->prepare("SELECT user_id FROM user_activations WHERE token = :token LIMIT 1");
-            $stmt->execute(['token' => $token]);
-            $activation = $stmt->fetch();
-
-            if ($activation) {
-                $userId = $activation['user_id'];
-
-                $stmt = $db->prepare("UPDATE users SET is_activated = TRUE WHERE id = :user_id");
-                $stmt->execute(['user_id' => $userId]);
-
-                $stmt = $db->prepare("DELETE FROM user_activations WHERE user_id = :user_id");
-                $stmt->execute(['user_id' => $userId]);
-
-                $_SESSION['success_message'] = "Votre compte a été activé avec succès. Vous pouvez maintenant vous connecter.";
-                header("Location: /login");
-                exit;
-            } else {
-                echo "Lien d'activation invalide ou expiré.";
-            }
-        } else {
-            echo "Lien d'activation manquant.";
-        }
-    }
-
     public function dashboard(string $template, string $view): void
     {
-        $this->render($template, $view, [
+        // La vérification de l'authentification est gérée par le middleware
+
+        $data = [
             'title' => 'Dashboard',
             'first_name' => $_SESSION['first_name'],
             'last_name' => $_SESSION['last_name'],
             'email' => $_SESSION['email']
-        ]);
+        ];
+
+        $this->renderWithSharedData($template, $view, $data);
     }
 
     public function logout(): void

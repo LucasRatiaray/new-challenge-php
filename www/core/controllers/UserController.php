@@ -21,10 +21,10 @@ class UserController extends Controller
 
         $data = [
             'title' => 'Gestion des Utilisateurs',
-            'users' => $users
+            'users' => $users,
         ];
 
-        $this->render($template, $view, $data);
+        $this->renderWithSharedData($template, $view, $data);
     }
 
     /**
@@ -43,7 +43,7 @@ class UserController extends Controller
             'action' => 'create'
         ];
 
-        $this->render($template, $view, $data);
+        $this->renderWithSharedData($template, $view, $data);
     }
 
     /**
@@ -135,7 +135,7 @@ class UserController extends Controller
             'user' => $user
         ];
 
-        $this->render($template, $view, $data);
+        $this->renderWithSharedData($template, $view, $data);
     }
 
     /**
@@ -237,7 +237,7 @@ class UserController extends Controller
         $deleted = $userModel->delete($userId);
 
         if ($deleted) {
-            // Rediriger vers la liste des utilisateurs avec succès
+            $_SESSION['success_message'] = "Utilisateur supprimé avec succès.";
             $this->redirect('/dashboard/users');
         } else {
             echo "Erreur lors de la suppression de l'utilisateur.";

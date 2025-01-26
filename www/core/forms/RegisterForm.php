@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Core\Forms;
@@ -26,11 +27,6 @@ class RegisterForm
                         "class" => "block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-transparent rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"
                     ],
                     "label_classes" => "absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-gray-100 px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1",
-                    "validation" => [
-                        "min" => 2,
-                        "max" => 100,
-                        "error" => "Votre nom doit faire entre 2 et 100 caractères."
-                    ]
                 ],
                 "first_name" => [
                     "type" => "text",
@@ -43,11 +39,6 @@ class RegisterForm
                         "class" => "block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-transparent rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"
                     ],
                     "label_classes" => "absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-gray-100 px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1",
-                    "validation" => [
-                        "min" => 2,
-                        "max" => 100,
-                        "error" => "Votre prénom doit faire entre 2 et 100 caractères."
-                    ]
                 ],
                 "email" => [
                     "type" => "email",
@@ -60,11 +51,6 @@ class RegisterForm
                         "class" => "block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-transparent rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"
                     ],
                     "label_classes" => "absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-gray-100 px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1",
-                    "validation" => [
-                        "min" => 8,
-                        "max" => 320,
-                        "error" => "Votre email doit faire entre 8 et 320 caractères et être valide."
-                    ]
                 ],
                 "password" => [
                     "type" => "password",
@@ -77,10 +63,6 @@ class RegisterForm
                         "class" => "block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-transparent rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"
                     ],
                     "label_classes" => "absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-gray-100 px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1",
-                    "validation" => [
-                        "min" => 8,
-                        "error" => "Votre mot de passe doit faire au minimum 8 caractères avec des lettres (min et maj) et des chiffres."
-                    ]
                 ],
                 "confirm_password" => [
                     "type" => "password",
@@ -93,10 +75,6 @@ class RegisterForm
                         "class" => "block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-transparent rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"
                     ],
                     "label_classes" => "absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-gray-100 px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1",
-                    "validation" => [
-                        "min" => 8,
-                        "error" => "Votre mot de passe doit faire au minimum 8 caractères avec des lettres (min et maj) et des chiffres."
-                    ]
                 ]
             ],
             "submit" => [

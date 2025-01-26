@@ -46,6 +46,15 @@ class User
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Compte le nombre total d'utilisateurs.
+     */
+    public function count(): int
+    {
+        $db = Database::getInstance();
+        $stmt = $db->query("SELECT COUNT(*) FROM users");
+        return (int) $stmt->fetchColumn();
+    }
 
     /**
      * Trouve un utilisateur par son ID.

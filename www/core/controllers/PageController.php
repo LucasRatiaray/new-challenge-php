@@ -7,7 +7,6 @@ namespace Core\Controllers;
 use Core\Forms\FormBuilder;
 use Core\Models\Page;
 use Core\View;
-use Exception;
 
 class PageController extends Controller
 {
@@ -21,7 +20,7 @@ class PageController extends Controller
             'pages' => $pages
         ];
 
-        $this->render($template, $view, $data);
+        $this->renderWithSharedData($template, $view, $data);
     }
 
     public function show(string $template, string $view, array $params): void
@@ -51,8 +50,7 @@ class PageController extends Controller
             'content' => $page['content']
         ];
 
-        // Rendu avec le template et la vue
-        View::render($template, $view, $data);
+        $this->renderWithSharedData($template, $view, $data);
     }
 
     public function create(string $template, string $view): void
@@ -68,7 +66,7 @@ class PageController extends Controller
             'action' => 'create'
         ];
 
-        $this->render($template, $view, $data);
+        $this->renderWithSharedData($template, $view, $data);
     }
 
     public function store(string $template, string $view): void
@@ -132,7 +130,7 @@ class PageController extends Controller
             'page' => $page
         ];
 
-        $this->render($template, $view, $data);
+        $this->renderWithSharedData($template, $view, $data);
     }
 
     public function update(string $template, string $view, array $params): void

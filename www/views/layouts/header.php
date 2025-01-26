@@ -18,8 +18,10 @@ $pages = $pageModel->getAll();
         <div class="flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
             <?php if (!isset($_SESSION['user_id'])) : ?>
                 <a href="/login" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center">Se connecter</a>
-            <?php else : ?>
+            <?php elseif (isset($_SESSION['roles']) && (in_array('ADMIN', $_SESSION['roles'], true) || in_array('EDITOR', $_SESSION['roles'], true))) : ?>
                 <a href="/dashboard" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center">Tableau de bord</a>
+            <?php else : ?>
+                <a href="/logout" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center">Déconnexion</a>
             <?php endif; ?>
             <button data-collapse-toggle="navbar-cta" type="button" class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200" aria-controls="navbar-cta" aria-expanded="false">
                 <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
@@ -43,14 +45,14 @@ $pages = $pageModel->getAll();
                         </a>
                     </li>
                 <?php endforeach; ?>
-                <?php if (!isset($_SESSION['user_id'])) : ?>
-                    <li>
-                        <a href="/register" class="block py-2 px-3 md:p-0 rounded-sm <?php echo $current_page == 'about' ? 'text-white bg-blue-700 md:bg-transparent md:text-blue-700' : 'text-gray-900 hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700'; ?>">Créer un compte</a>
-                    </li>
-                <?php endif; ?>
                 <li>
                     <a href="/about" class="block py-2 px-3 md:p-0 rounded-sm <?php echo $current_page == 'about' ? 'text-white bg-blue-700 md:bg-transparent md:text-blue-700' : 'text-gray-900 hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700'; ?>">À propos</a>
                 </li>
+                <?php if (!isset($_SESSION['user_id'])) : ?>
+                    <li>
+                        <a href="/register" class="block py-2 px-3 md:p-0 rounded-sm <?php echo $current_page == 'register' ? 'text-white bg-blue-700 md:bg-transparent md:text-blue-700' : 'text-gray-900 hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700'; ?>">Créer un compte</a>
+                    </li>
+                <?php endif; ?>
             </ul>
         </div>
     </div>

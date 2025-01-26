@@ -14,6 +14,13 @@ class Page
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function count(): int
+    {
+        $db = Database::getInstance();
+        $stmt = $db->query("SELECT COUNT(*) FROM pages");
+        return (int) $stmt->fetchColumn();
+    }
+
     public function findById(int $id): ?array
     {
         $db = Database::getInstance();

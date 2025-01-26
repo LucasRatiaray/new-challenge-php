@@ -1,9 +1,11 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Core\Forms;
 
 use Core\Utils\Csrf;
+use Core\Utils\Validation;
 
 class FormBuilder
 {
@@ -26,15 +28,6 @@ class FormBuilder
     public function build(): string
     {
         $html = '';
-
-        // Affichage des erreurs
-        if (!empty($this->errors)) {
-            $html .= "<ul class='mb-4'>";
-            foreach ($this->errors as $error) {
-                $html .= "<li class='text-red-500'>{$error}</li>";
-            }
-            $html .= "</ul>";
-        }
 
         // Récupération des configurations du formulaire
         $method = htmlspecialchars($this->config["config"]["method"] ?? "POST", ENT_QUOTES, 'UTF-8');
@@ -137,93 +130,42 @@ class FormBuilder
 
     public function isValid(): bool
     {
+        $validator = new Validation();
         $method = $this->config["config"]["method"] ?? "POST";
         $data = ($method === "POST") ? $_POST : $_GET;
 
         if (empty($data['csrf_token'])) {
-            $this->errors[] = "CSRF token manquant.";
-            return false;
+            $validator->addError("CSRF token manquant.");
+        } elseif (!Csrf::verifyToken($data['csrf_token'])) {
+            $validator->addError("Le token CSRF est invalide ou expiré.");
         }
 
-        if (!Csrf::verifyToken($data['csrf_token'])) {
-            $this->errors[] = "Le token CSRF est invalide ou expiré.";
-            return false;
-        }
-
-        unset($data['csrf_token']);
-
-        // Validation des champs
         foreach ($this->config["inputs"] as $name => $configField) {
-            // Gestion des rôles (checkbox)
-            if ($configField["type"] === "checkbox") {
-                // Rôles ne sont pas requis, mais au moins un doit être sélectionné si requis
-                if (isset($configField["validation"]["required"]) && $configField["validation"]["required"]) {
-                    if (empty($data[$name]) || !is_array($data[$name])) {
-                        $this->errors[] = $configField["validation"]["error"] ?? "Veuillez sélectionner au moins un rôle.";
-                        continue;
-                    }
-                }
-                continue; // Les rôles sont gérés séparément
+            $value = $data[$name] ?? '';
+
+            // Exemple d'appel au validateur
+            if (!empty($configField["attributes"]["required"])) {
+                $validator->validateRequired($name, $value);
             }
 
-            // Si on est en édition, et le champ est password, on le rend optionnel
-            $isPasswordField = in_array($name, ['password', 'confirm_password']);
-            $isEdit = isset($this->userData['id']);
-
-            // Required
-            if (!empty($configField["attributes"]["required"]) && !$isEdit) {
-                if (!isset($data[$name]) || empty(trim($data[$name]))) {
-                    $this->errors[] = "Le champ {$name} est requis.";
-                    continue;
-                }
+            if (isset($configField["validation"]["min"]) && isset($configField["validation"]["max"])) {
+                $validator->validateLength($name, $value, $configField["validation"]["min"], $configField["validation"]["max"]);
             }
 
-            // Si le champ est optionnel et vide en édition, sauter les validations
-            if ($isEdit && $isPasswordField && empty(trim($data[$name] ?? ''))) {
-                continue;
-            }
-
-            if (isset($data[$name])) {
-                $value = $data[$name];
-
-                // Validation spécifique
-                if (isset($configField["validation"])) {
-                    // Min
-                    if (isset($configField["validation"]["min"]) && strlen($value) < $configField["validation"]["min"]) {
-                        $this->errors[] = $configField["validation"]["error"] ?? "Le champ {$name} est trop court.";
-                    }
-
-                    // Max
-                    if (isset($configField["validation"]["max"]) && strlen($value) > $configField["validation"]["max"]) {
-                        $this->errors[] = $configField["validation"]["error"] ?? "Le champ {$name} est trop long.";
-                    }
-
-                    // Type email
-                    if ($configField["type"] === "email") {
-                        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                            $this->errors[] = $configField["validation"]["error"] ?? "Le format de l'email est invalide.";
-                        }
-                    }
-
-                    // Type password : lettres et chiffres
-                    if ($configField["type"] === "password") {
-                        if ($name === "password" && !empty($value)) { // Validation du mot de passe principal
-                            if (!preg_match("#[a-zA-Z]#", $value) || !preg_match("#[0-9]#", $value)) {
-                                $this->errors[] = $configField["validation"]["error"] ?? "Le mot de passe doit contenir des lettres et des chiffres.";
-                            }
-                        }
-
-                        if ($name === "confirm_password" && !empty($value)) { // Validation de la confirmation du mot de passe
-                            if (isset($data['password']) && $value !== $data['password']) {
-                                $this->errors[] = $configField["validation"]["error"] ?? "Les mots de passe ne correspondent pas.";
-                            }
-                        }
-                    }
-                }
+            if ($configField["type"] === "email") {
+                $validator->validateEmail($name, $value);
             }
         }
 
-        return empty($this->errors);
+        // Transférer les erreurs au formulaire
+        if ($validator->hasErrors()) {
+            foreach ($validator->getErrors() as $error) {
+                $this->addError($error);
+            }
+            return false;
+        }
+
+        return true;
     }
 
     public function getData(): array
@@ -232,11 +174,6 @@ class FormBuilder
         $data = ($method === "POST") ? $_POST : $_GET;
 
         unset($data['csrf_token']);
-
-        // Exclure le champ 'confirm_password' si présent
-        if (isset($data['confirm_password'])) {
-            unset($data['confirm_password']);
-        }
 
         // Récupérer les rôles sélectionnés
         if (isset($data['roles']) && is_array($data['roles'])) {
